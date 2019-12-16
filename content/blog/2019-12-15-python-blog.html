@@ -1,0 +1,35 @@
+---
+title: Python Blog
+author: Hannah Kirby
+date: '2019-12-15'
+slug: python-blog
+categories: []
+tags: []
+description: ''
+---
+
+
+
+<p><em>Python and R Studio are both really interesting and useful tools used to interpret data, make graphics, and create websites. One really cool feature shared between these two languages is their ability to be utilized simultaneously in one document. My goal for this blog is to demonstrate the use of both languages to render specific results of interest.</em></p>
+<pre class="r"><code>library(reticulate)
+
+hello&lt;-&quot;I hope that you find&quot;</code></pre>
+<pre class="python"><code>there= &quot;this blog post interesting.&quot;
+print(r.hello, there)</code></pre>
+<pre><code>## (&#39;I hope that you find&#39;, &#39;this blog post interesting.&#39;)</code></pre>
+<p><em>This is an example of combining text from the two separate languages.</em></p>
+<pre class="r"><code>cat(c(hello, py$there))</code></pre>
+<pre><code>## I hope that you find this blog post interesting.</code></pre>
+<pre class="r"><code>head(mtcars)</code></pre>
+<pre><code>##                    mpg cyl disp  hp drat    wt  qsec vs am gear carb
+## Mazda RX4         21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+## Mazda RX4 Wag     21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+## Datsun 710        22.8   4  108  93 3.85 2.320 18.61  1  1    4    1
+## Hornet 4 Drive    21.4   6  258 110 3.08 3.215 19.44  1  0    3    1
+## Hornet Sportabout 18.7   8  360 175 3.15 3.440 17.02  0  0    3    2
+## Valiant           18.1   6  225 105 2.76 3.460 20.22  1  0    3    1</code></pre>
+<pre class="r"><code>?mtcars
+totcarwt&lt;-sum(mtcars$wt)</code></pre>
+<pre class="python"><code>r.totcarwt + 100</code></pre>
+<pre><code>## 202.952</code></pre>
+<p><em>These two examples are quite simple, but it is a very good introduction to the interaction of R and Python. It is clear from these examples that you can manipulate or create data in one language, then manupulate it or add to that data in the next language.</em></p>

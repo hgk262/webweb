@@ -1,0 +1,171 @@
+---
+title: "Exploratory Data Analysis"
+author: "Hannah Kirby"
+date: "10/17/2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+*It is known that socioeconomic status (SES) is a decent predictor of health disparities in the span of peoples lives. There are a variety of mechanisms in the human body that cause this, for example a heightened or more burdened stress response pathway in the body is known to contribute to a variety of diseases such as diabetes, high blood pressure, and some cancers. In this exploratory data analysis I will be comparing two datasets to explore various relationships analyzing cancer cases, population, location, income, and rent costs in each state in the US. Considering the above statements, I expect to see a trend that reflects more cancer cases in locations with lower incomes and or higher rent costs.*
+
+*The data containing information about rent and income came from an R package and the data containing the information about cancer cases was found at the link below.*
+*cancer_data from http://worldpopulationreview.com/states/cancer-rates-by-state/ *
+
+```{r cars}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tidyverse)
+
+US_rent<- us_rent_income
+cancer_data<-read.csv("cancer_data.csv")
+
+head(US_rent)
+head(cancer_data)
+
+```
+
+*"US_rent" dataset contains the state name, its geographic ID, variables income and rent, and the corresponding estimate and margin of error. The "cancer_data" dataset contains the State, age-adjusted rate, and the population for that state.*
+
+
+
+```{R}
+US_rent2<-US_rent%>% pivot_wider(names_from = "variable",values_from =c("estimate","moe"))%>% rename(State=NAME)
+head(US_rent2)
+
+```
+
+*I used the tidyverse function pivot_wider() here to split the "variable" column into separate columns with values that correspond to the "estimate" and moe "variables".* 
+
+
+```{R}
+data_join<-full_join(US_rent2,cancer_data, by=c("State"))
+head(data_join)
+```
+
+*Here I joined the two datasets using a full join. Now each listed State should have a corresponding case count, population, age-adjusted rate, income, rent, margins of error for income and rent, and the GEO-ID. In addition to this, there are no duplicate states (or rows).* 
+
+```{R}
+
+Join2<-data_join%>% select(State,caseCount,Pop,ageAdjustedRate,estimate_income,estimate_rent,moe_income, moe_rent)
+head(Join2)
+
+```
+*DPLYR function select() to select all of the variables except for "GEOID" because this variable was just numbering the states in alphabetical order, and there is no analysis that I want to conduct with that information.*
+
+
+
+```{R}
+Join3<-Join2%>% mutate(case_by_pop=caseCount/Pop)
+head(Join3)
+
+```
+
+
+
+
+```{R}
+head(Join3%>% select(State, caseCount, estimate_income,case_by_pop )%>% group_by(caseCount, estimate_income)%>% arrange(estimate_income))
+head(Join3%>% select(State, caseCount, estimate_income,case_by_pop )%>% group_by(caseCount, estimate_income)%>% arrange(desc(estimate_income)))
+
+head(Join3%>% select(State, caseCount, estimate_income,case_by_pop )%>% group_by(caseCount, estimate_income)%>% arrange(case_by_pop))
+head(Join3%>% select(State, caseCount, estimate_income, case_by_pop)%>% group_by(caseCount, estimate_income)%>% arrange(desc(case_by_pop)))
+
+```
+*Mississippi has the lowest estimate income and District of Columbia has the highest estimate income.Utah has the smallest number of cases in proportion with their population, and Utah has the highest number of cases in proportion with their population.*
+
+
+```{R}
+Join3%>% filter(is.na(caseCount))
+
+```
+*Puerto Rico is the only "State" that contains NAs. This means that one of the original datasets contained information for Puerto Rico and one of the datasets did not. However, Puerto Rico was maintained because I used a full join.*
+
+```{R}
+head(Join3%>%summarize_if(is.numeric, list(min=min,max=max), na.rm=T))
+
+```
+
+*This shows the min and max values. Because there are no duplicate state variables, there is not a huge variety of summary statistics to conduct. Therefore the min and max values here are the same because there is not multiple population data (i.e.) for one state.*
+
+```{R}
+ggData<-Join3%>% ggplot(aes(estimate_income, case_by_pop, color=State))+geom_point()+theme(legend.position ="none")
+
+ggData
+
+
+
+```
+*This graph shows the relationship between the estimated income for each state and the cases by population. There appears to be a slight relationship between the two variables, in which as income increases, the cases by population decrease. In other words, the lower the income, the more cancer cases by population are reported.*
+
+```{R}
+Join3%>% ggplot(aes(State))+ geom_bar(aes(y=estimate_income, fill=State),stat="summary", fun.y="mean")+ theme(axis.text.x = element_text(angle=45, hjust=1),
+legend.position="none")
+
+```
+*This visual shows the various incomes of the states in comparison to one another. It is clear now that District of Columbia and Mississippi have the maximum and minimum incomes, respectively. It is also clear that Puerto Rico is missing estimated income data here, as previously discussed.*
+
+
+
+
+**Principle Component Analysis**
+```{R}
+
+Fresh_data<-Join3%>% na.omit()
+head(Fresh_data)
+
+typeof(Fresh_data$caseCount)
+
+pca_start<-Fresh_data%>% mutate_if(is.double, as.integer)%>%select(-case_by_pop)
+
+nums<-pca_start%>% select_if(is.numeric)%>% scale
+rownames(nums)<-pca_start$State
+data_pca<-princomp(nums)
+names(data_pca)
+
+summary(data_pca, loadings=T)
+
+eigval<-data_pca$sdev^2
+varprop=round(eigval/sum(eigval),2)
+
+ggplot()+geom_bar(aes(y=varprop,x=1:7),stat="identity")+xlab("")+geom_path(aes(y=varprop,x=1:7))+
+ geom_text(aes(x=1:7,y=varprop,label=round(varprop,2)),vjust=1,col="white",size=5)+
+ scale_y_continuous(breaks=seq(0,.6,.2),labels = scales::percent)+
+ scale_x_continuous(breaks=1:10)
+
+```
+
+*This part of the analysis was to normalize and scale the data, as well as to calculate the covariance matrix. By creating the bar plot, it was clear that the first two Principle Components were sufficient for the analysis, because they added up to approximately 80, which is a known cutoff for picking principle components.*
+
+
+```{R}
+eigval
+
+eigen(cor(nums))
+
+datadf<-data.frame(PC1=data_pca$scores[,1], PC2=data_pca$scores[,2])
+ggplot(datadf,aes(PC1, PC2))+geom_point()
+
+State<-pca_start$State
+
+data_pca$scores%>%as.data.frame%>%cbind(State,.)%>%top_n(3,Comp.1) 
+data_pca$scores%>%as.data.frame%>%cbind(State,.)%>%top_n(3,wt=desc(Comp.1))
+data_pca$scores%>%as.data.frame%>%cbind(State,.)%>%top_n(3,wt=Comp.2)
+data_pca$scores%>%as.data.frame%>%cbind(State,.)%>%top_n(3,wt=desc(Comp.2))
+
+
+data_pca$loadings[1:7,1:2]%>%as.data.frame%>%rownames_to_column%>%
+ggplot()+geom_hline(aes(yintercept=0),lty=2)+
+ geom_vline(aes(xintercept=0),lty=2)+ylab("PC2")+xlab("PC1")+
+ geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col="red")+
+ geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))
+```
+*In this next part of the analysis, we found that the states that scored highest on PC1 were Alaska, D.C., and Hawaii, while the states that scored lowest on PC1 were California, Florida, and Texas. On the other hand the states that scored highest on PC2 were California, D.C., and Texas, while the states that scored lowest on PC2 were Arkansas, Kentucky, and West Virginia.*
+*We can also see that estimated income and case counts are oppositely correlated, which is what I predicted, and another interesting take away is that population and case count are highly correlated to each other, meaning that a higher population will typically mean a higher count of cancer cases, which seems quite logical.*
+
+

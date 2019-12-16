@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Hannah Kirby" />
+    <meta name="description" content="Describe your website">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.61.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/blog/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project1/">Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 1, 0001
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<p><em>It is known that socioeconomic status (SES) is a decent predictor of health disparities in the span of peoples lives. There are a variety of mechanisms in the human body that cause this, for example a heightened or more burdened stress response pathway in the body is known to contribute to a variety of diseases such as diabetes, high blood pressure, and some cancers. In this exploratory data analysis I will be comparing two datasets to explore various relationships analyzing cancer cases, population, location, income, and rent costs in each state in the US. Considering the above statements, I expect to see a trend that reflects more cancer cases in locations with lower incomes and or higher rent costs.</em></p>
+<p><em>The data containing information about rent and income came from an R package and the data containing the information about cancer cases was found at the link below.</em>
+<em>cancer_data from <a href="http://worldpopulationreview.com/states/cancer-rates-by-state/" class="uri">http://worldpopulationreview.com/states/cancer-rates-by-state/</a> </em></p>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(tidyr)
+library(ggplot2)</code></pre>
+<pre><code>## Warning in as.POSIXlt.POSIXct(Sys.time()): unknown timezone &#39;zone/tz/2019c.
+## 1.0/zoneinfo/America/Chicago&#39;</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ tibble  2.1.3     ✔ purrr   0.3.2
+## ✔ readr   1.1.1     ✔ stringr 1.4.0
+## ✔ tibble  2.1.3     ✔ forcats 0.4.0</code></pre>
+<pre><code>## Warning: package &#39;readr&#39; was built under R version 3.3.2</code></pre>
+<pre><code>## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>US_rent&lt;- us_rent_income
+cancer_data&lt;-read.csv(&quot;cancer_data.csv&quot;)
+
+head(US_rent)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   GEOID NAME    variable estimate   moe
+##   &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt; &lt;dbl&gt;
+## 1 01    Alabama income      24476   136
+## 2 01    Alabama rent          747     3
+## 3 02    Alaska  income      32940   508
+## 4 02    Alaska  rent         1200    13
+## 5 04    Arizona income      27517   148
+## 6 04    Arizona rent          972     4</code></pre>
+<pre class="r"><code>head(cancer_data)</code></pre>
+<pre><code>##           State ageAdjustedRate caseCount      Pop
+## 1      Kentucky           509.7     27137  4484047
+## 2      Delaware           487.2      6001   975033
+## 3  Pennsylvania           482.5     80089 12813969
+## 4 New Hampshire           480.9      8442  1363852
+## 5    New Jersey           474.8     51521  8922547
+## 6      New York           474.8    113026 19491339</code></pre>
+<p><em>“US_rent” dataset contains the state name, its geographic ID, variables income and rent, and the corresponding estimate and margin of error. The “cancer_data” dataset contains the State, age-adjusted rate, and the population for that state.</em></p>
+<pre class="r"><code>US_rent2&lt;-US_rent%&gt;% pivot_wider(names_from = &quot;variable&quot;,values_from =c(&quot;estimate&quot;,&quot;moe&quot;))%&gt;% rename(State=NAME)
+head(US_rent2)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##   GEOID State      estimate_income estimate_rent moe_income moe_rent
+##   &lt;chr&gt; &lt;chr&gt;                &lt;dbl&gt;         &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;
+## 1 01    Alabama              24476           747        136        3
+## 2 02    Alaska               32940          1200        508       13
+## 3 04    Arizona              27517           972        148        4
+## 4 05    Arkansas             23789           709        165        5
+## 5 06    California           29454          1358        109        3
+## 6 08    Colorado             32401          1125        109        5</code></pre>
+<p><em>I used the tidyverse function pivot_wider() here to split the “variable” column into separate columns with values that correspond to the “estimate” and moe “variables”.</em></p>
+<pre class="r"><code>data_join&lt;-full_join(US_rent2,cancer_data, by=c(&quot;State&quot;))</code></pre>
+<pre><code>## Warning: Column `State` joining character vector and factor, coercing into
+## character vector</code></pre>
+<pre class="r"><code>head(data_join)</code></pre>
+<pre><code>## # A tibble: 6 x 9
+##   GEOID State estimate_income estimate_rent moe_income moe_rent
+##   &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;
+## 1 01    Alab…           24476           747        136        3
+## 2 02    Alas…           32940          1200        508       13
+## 3 04    Ariz…           27517           972        148        4
+## 4 05    Arka…           23789           709        165        5
+## 5 06    Cali…           29454          1358        109        3
+## 6 08    Colo…           32401          1125        109        5
+## # … with 3 more variables: ageAdjustedRate &lt;dbl&gt;, caseCount &lt;int&gt;,
+## #   Pop &lt;int&gt;</code></pre>
+<p><em>Here I joined the two datasets using a full join. Now each listed State should have a corresponding case count, population, age-adjusted rate, income, rent, margins of error for income and rent, and the GEO-ID. In addition to this, there are no duplicate states (or rows).</em></p>
+<pre class="r"><code>Join2&lt;-data_join%&gt;% select(State,caseCount,Pop,ageAdjustedRate,estimate_income,estimate_rent,moe_income, moe_rent)
+head(Join2)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##   State caseCount    Pop ageAdjustedRate estimate_income estimate_rent
+##   &lt;chr&gt;     &lt;int&gt;  &lt;int&gt;           &lt;dbl&gt;           &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Alab…     27195 4.90e6            458.           24476           747
+## 2 Alas…      2882 7.36e5            406.           32940          1200
+## 3 Ariz…     31443 7.28e6            376.           27517           972
+## 4 Arka…     17053 3.03e6            470.           23789           709
+## 5 Cali…    164887 3.97e7            386.           29454          1358
+## 6 Colo…     23244 5.77e6            389.           32401          1125
+## # … with 2 more variables: moe_income &lt;dbl&gt;, moe_rent &lt;dbl&gt;</code></pre>
+<p><em>DPLYR function select() to select all of the variables except for “GEOID” because this variable was just numbering the states in alphabetical order, and there is no analysis that I want to conduct with that information.</em></p>
+<pre class="r"><code>Join3&lt;-Join2%&gt;% mutate(case_by_pop=caseCount/Pop)
+head(Join3)</code></pre>
+<pre><code>## # A tibble: 6 x 9
+##   State caseCount    Pop ageAdjustedRate estimate_income estimate_rent
+##   &lt;chr&gt;     &lt;int&gt;  &lt;int&gt;           &lt;dbl&gt;           &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Alab…     27195 4.90e6            458.           24476           747
+## 2 Alas…      2882 7.36e5            406.           32940          1200
+## 3 Ariz…     31443 7.28e6            376.           27517           972
+## 4 Arka…     17053 3.03e6            470.           23789           709
+## 5 Cali…    164887 3.97e7            386.           29454          1358
+## 6 Colo…     23244 5.77e6            389.           32401          1125
+## # … with 3 more variables: moe_income &lt;dbl&gt;, moe_rent &lt;dbl&gt;,
+## #   case_by_pop &lt;dbl&gt;</code></pre>
+<pre class="r"><code>head(Join3%&gt;% select(State, caseCount, estimate_income,case_by_pop )%&gt;% group_by(caseCount, estimate_income)%&gt;% arrange(estimate_income))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+## # Groups:   caseCount, estimate_income [6]
+##   State         caseCount estimate_income case_by_pop
+##   &lt;chr&gt;             &lt;int&gt;           &lt;dbl&gt;       &lt;dbl&gt;
+## 1 Mississippi       16265           22766     0.00544
+## 2 West Virginia     11698           23707     0.00653
+## 3 Arkansas          17053           23789     0.00563
+## 4 New Mexico         9075           24457     0.00433
+## 5 Alabama           27195           24476     0.00555
+## 6 Kentucky          27137           24702     0.00605</code></pre>
+<pre class="r"><code>head(Join3%&gt;% select(State, caseCount, estimate_income,case_by_pop )%&gt;% group_by(caseCount, estimate_income)%&gt;% arrange(desc(estimate_income)))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+## # Groups:   caseCount, estimate_income [6]
+##   State                caseCount estimate_income case_by_pop
+##   &lt;chr&gt;                    &lt;int&gt;           &lt;dbl&gt;       &lt;dbl&gt;
+## 1 District of Columbia      2566           43198     0.00361
+## 2 Maryland                 30942           37147     0.00510
+## 3 Connecticut              21117           35326     0.00592
+## 4 New Jersey               51521           35075     0.00577
+## 5 Massachusetts            33626           34498     0.00485
+## 6 New Hampshire             8442           33172     0.00619</code></pre>
+<pre class="r"><code>head(Join3%&gt;% select(State, caseCount, estimate_income,case_by_pop )%&gt;% group_by(caseCount, estimate_income)%&gt;% arrange(case_by_pop))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+## # Groups:   caseCount, estimate_income [6]
+##   State                caseCount estimate_income case_by_pop
+##   &lt;chr&gt;                    &lt;int&gt;           &lt;dbl&gt;       &lt;dbl&gt;
+## 1 Utah                     10494           27928     0.00326
+## 2 District of Columbia      2566           43198     0.00361
+## 3 Texas                   109083           28063     0.00375
+## 4 Alaska                    2882           32940     0.00392
+## 5 Colorado                 23244           32401     0.00403
+## 6 California              164887           29454     0.00415</code></pre>
+<pre class="r"><code>head(Join3%&gt;% select(State, caseCount, estimate_income, case_by_pop)%&gt;% group_by(caseCount, estimate_income)%&gt;% arrange(desc(case_by_pop)))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+## # Groups:   caseCount, estimate_income [6]
+##   State         caseCount estimate_income case_by_pop
+##   &lt;chr&gt;             &lt;int&gt;           &lt;dbl&gt;       &lt;dbl&gt;
+## 1 Maine              8901           26841     0.00663
+## 2 West Virginia     11698           23707     0.00653
+## 3 Pennsylvania      80089           28923     0.00625
+## 4 New Hampshire      8442           33172     0.00619
+## 5 Delaware           6001           31560     0.00615
+## 6 Kentucky          27137           24702     0.00605</code></pre>
+<p><em>Mississippi has the lowest estimate income and District of Columbia has the highest estimate income.Utah has the smallest number of cases in proportion with their population, and Utah has the highest number of cases in proportion with their population.</em></p>
+<pre class="r"><code>Join3%&gt;% filter(is.na(caseCount))</code></pre>
+<pre><code>## # A tibble: 1 x 9
+##   State caseCount   Pop ageAdjustedRate estimate_income estimate_rent
+##   &lt;chr&gt;     &lt;int&gt; &lt;int&gt;           &lt;dbl&gt;           &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Puer…        NA    NA              NA              NA           464
+## # … with 3 more variables: moe_income &lt;dbl&gt;, moe_rent &lt;dbl&gt;,
+## #   case_by_pop &lt;dbl&gt;</code></pre>
+<p><em>Puerto Rico is the only “State” that contains NAs. This means that one of the original datasets contained information for Puerto Rico and one of the datasets did not. However, Puerto Rico was maintained because I used a full join.</em></p>
+<pre class="r"><code>head(Join3%&gt;%summarize_if(is.numeric, list(min=min,max=max), na.rm=T))</code></pre>
+<pre><code>## # A tibble: 1 x 16
+##   caseCount_min Pop_min ageAdjustedRate… estimate_income… estimate_rent_m…
+##           &lt;int&gt;   &lt;int&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+## 1          2566  572381             359.            22766              464
+## # … with 11 more variables: moe_income_min &lt;dbl&gt;, moe_rent_min &lt;dbl&gt;,
+## #   case_by_pop_min &lt;dbl&gt;, caseCount_max &lt;int&gt;, Pop_max &lt;int&gt;,
+## #   ageAdjustedRate_max &lt;dbl&gt;, estimate_income_max &lt;dbl&gt;,
+## #   estimate_rent_max &lt;dbl&gt;, moe_income_max &lt;dbl&gt;, moe_rent_max &lt;dbl&gt;,
+## #   case_by_pop_max &lt;dbl&gt;</code></pre>
+<p><em>This shows the min and max values. Because there are no duplicate state variables, there is not a huge variety of summary statistics to conduct. Therefore the min and max values here are the same because there is not multiple population data (i.e.) for one state.</em></p>
+<pre class="r"><code>ggData&lt;-Join3%&gt;% ggplot(aes(estimate_income, case_by_pop, color=State))+geom_point()+theme(legend.position =&quot;none&quot;)
+
+ggData</code></pre>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<em>This graph shows the relationship between the estimated income for each state and the cases by population. There appears to be a slight relationship between the two variables, in which as income increases, the cases by population decrease. In other words, the lower the income, the more cancer cases by population are reported.</em></p>
+<pre class="r"><code>Join3%&gt;% ggplot(aes(State))+ geom_bar(aes(y=estimate_income, fill=State),stat=&quot;summary&quot;, fun.y=&quot;mean&quot;)+ theme(axis.text.x = element_text(angle=45, hjust=1),
+legend.position=&quot;none&quot;)</code></pre>
+<pre><code>## Warning: Removed 1 rows containing non-finite values (stat_summary).</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+<em>This visual shows the various incomes of the states in comparison to one another. It is clear now that District of Columbia and Mississippi have the maximum and minimum incomes, respectively. It is also clear that Puerto Rico is missing estimated income data here, as previously discussed.</em></p>
+<p><strong>Principle Component Analysis</strong></p>
+<pre class="r"><code>Fresh_data&lt;-Join3%&gt;% na.omit()
+head(Fresh_data)</code></pre>
+<pre><code>## # A tibble: 6 x 9
+##   State caseCount    Pop ageAdjustedRate estimate_income estimate_rent
+##   &lt;chr&gt;     &lt;int&gt;  &lt;int&gt;           &lt;dbl&gt;           &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Alab…     27195 4.90e6            458.           24476           747
+## 2 Alas…      2882 7.36e5            406.           32940          1200
+## 3 Ariz…     31443 7.28e6            376.           27517           972
+## 4 Arka…     17053 3.03e6            470.           23789           709
+## 5 Cali…    164887 3.97e7            386.           29454          1358
+## 6 Colo…     23244 5.77e6            389.           32401          1125
+## # … with 3 more variables: moe_income &lt;dbl&gt;, moe_rent &lt;dbl&gt;,
+## #   case_by_pop &lt;dbl&gt;</code></pre>
+<pre class="r"><code>typeof(Fresh_data$caseCount)</code></pre>
+<pre><code>## [1] &quot;integer&quot;</code></pre>
+<pre class="r"><code>pca_start&lt;-Fresh_data%&gt;% mutate_if(is.double, as.integer)%&gt;%select(-case_by_pop)
+
+nums&lt;-pca_start%&gt;% select_if(is.numeric)%&gt;% scale
+rownames(nums)&lt;-pca_start$State
+data_pca&lt;-princomp(nums)
+names(data_pca)</code></pre>
+<pre><code>## [1] &quot;sdev&quot;     &quot;loadings&quot; &quot;center&quot;   &quot;scale&quot;    &quot;n.obs&quot;    &quot;scores&quot;  
+## [7] &quot;call&quot;</code></pre>
+<pre class="r"><code>summary(data_pca, loadings=T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1    Comp.2    Comp.3     Comp.4     Comp.5
+## Standard deviation     1.7554545 1.4834797 0.9010329 0.64191719 0.51034483
+## Proportion of Variance 0.4490361 0.3206752 0.1182997 0.06004269 0.03795155
+## Cumulative Proportion  0.4490361 0.7697113 0.8880110 0.94805368 0.98600523
+##                            Comp.6      Comp.7
+## Standard deviation     0.28343977 0.125317345
+## Proportion of Variance 0.01170641 0.002288361
+## Cumulative Proportion  0.99771164 1.000000000
+## 
+## Loadings:
+##                 Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7
+## caseCount       -0.408  0.428         0.341                0.714
+## Pop             -0.385  0.456         0.350 -0.147  0.136 -0.693
+## ageAdjustedRate -0.143 -0.353 -0.863  0.296                     
+## estimate_income  0.334  0.392 -0.449 -0.431 -0.414  0.419       
+## estimate_rent    0.204  0.570 -0.203 -0.144  0.521 -0.546       
+## moe_income       0.504                0.475 -0.560 -0.448       
+## moe_rent         0.508                0.492  0.453  0.538</code></pre>
+<pre class="r"><code>eigval&lt;-data_pca$sdev^2
+varprop=round(eigval/sum(eigval),2)
+
+ggplot()+geom_bar(aes(y=varprop,x=1:7),stat=&quot;identity&quot;)+xlab(&quot;&quot;)+geom_path(aes(y=varprop,x=1:7))+
+ geom_text(aes(x=1:7,y=varprop,label=round(varprop,2)),vjust=1,col=&quot;white&quot;,size=5)+
+ scale_y_continuous(breaks=seq(0,.6,.2),labels = scales::percent)+
+ scale_x_continuous(breaks=1:10)</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p><em>This part of the analysis was to normalize and scale the data, as well as to calculate the covariance matrix. By creating the bar plot, it was clear that the first two Principle Components were sufficient for the analysis, because they added up to approximately 80, which is a known cutoff for picking principle components.</em></p>
+<pre class="r"><code>eigval</code></pre>
+<pre><code>##     Comp.1     Comp.2     Comp.3     Comp.4     Comp.5     Comp.6 
+## 3.08162055 2.20071212 0.81186037 0.41205767 0.26045185 0.08033810 
+##     Comp.7 
+## 0.01570444</code></pre>
+<pre class="r"><code>eigen(cor(nums))</code></pre>
+<pre><code>## $values
+## [1] 3.14325296 2.24472637 0.82809758 0.42029883 0.26566088 0.08194486
+## [7] 0.01601853
+## 
+## $vectors
+##            [,1]        [,2]        [,3]       [,4]        [,5]        [,6]
+## [1,] -0.4083574  0.42761198 -0.08040354  0.3405110 -0.09591523  0.09146851
+## [2,] -0.3846624  0.45634400  0.03620620  0.3498444 -0.14651267  0.13647645
+## [3,] -0.1430794 -0.35317870 -0.86270511  0.2956093  0.08045258 -0.09708721
+## [4,]  0.3336811  0.39182648 -0.44944431 -0.4311012 -0.41438647  0.41900011
+## [5,]  0.2039126  0.57020996 -0.20281581 -0.1443257  0.52126534 -0.54597252
+## [6,]  0.5038760  0.04507708  0.05667885  0.4751569 -0.56026755 -0.44794924
+## [7,]  0.5079301  0.05885257  0.04021625  0.4917561  0.45335224  0.53784399
+##              [,7]
+## [1,]  0.714432351
+## [2,] -0.692813989
+## [3,] -0.085144272
+## [4,]  0.001816686
+## [5,] -0.038891671
+## [6,]  0.023070184
+## [7,]  0.017249631</code></pre>
+<pre class="r"><code>datadf&lt;-data.frame(PC1=data_pca$scores[,1], PC2=data_pca$scores[,2])
+ggplot(datadf,aes(PC1, PC2))+geom_point()</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>State&lt;-pca_start$State
+
+data_pca$scores%&gt;%as.data.frame%&gt;%cbind(State,.)%&gt;%top_n(3,Comp.1) </code></pre>
+<pre><code>##                  State   Comp.1    Comp.2      Comp.3    Comp.4     Comp.5
+## 1               Alaska 3.926078 0.9943783  0.50254277 0.9562446 -0.2771029
+## 2 District of Columbia 6.516114 3.0584628 -0.07742294 0.7417896 -1.2030575
+## 3               Hawaii 3.478700 1.7758560 -0.07202113 0.4151530  2.6755470
+##        Comp.6      Comp.7
+## 1 -0.52295647  0.05606105
+## 2 -0.02725058  0.13717943
+## 3  0.55340854 -0.02930140</code></pre>
+<pre class="r"><code>data_pca$scores%&gt;%as.data.frame%&gt;%cbind(State,.)%&gt;%top_n(3,wt=desc(Comp.1))</code></pre>
+<pre><code>##        State    Comp.1   Comp.2    Comp.3    Comp.4      Comp.5
+## 1 California -3.392128 5.411330 0.7380314 1.3928630 -0.07561227
+## 2    Florida -2.802191 2.217963 0.5575263 0.7915825  0.34192251
+## 3      Texas -2.857271 2.698187 1.2180458 0.6825654 -0.71815324
+##        Comp.6     Comp.7
+## 1 -0.04585611 -0.2998631
+## 2 -0.06457181  0.3963564
+## 3  0.36735836 -0.4200198</code></pre>
+<pre class="r"><code>data_pca$scores%&gt;%as.data.frame%&gt;%cbind(State,.)%&gt;%top_n(3,wt=Comp.2)</code></pre>
+<pre><code>##                  State    Comp.1   Comp.2      Comp.3    Comp.4
+## 1           California -3.392128 5.411330  0.73803141 1.3928630
+## 2 District of Columbia  6.516114 3.058463 -0.07742294 0.7417896
+## 3                Texas -2.857271 2.698187  1.21804578 0.6825654
+##        Comp.5      Comp.6     Comp.7
+## 1 -0.07561227 -0.04585611 -0.2998631
+## 2 -1.20305748 -0.02725058  0.1371794
+## 3 -0.71815324  0.36735836 -0.4200198</code></pre>
+<pre class="r"><code>data_pca$scores%&gt;%as.data.frame%&gt;%cbind(State,.)%&gt;%top_n(3,wt=desc(Comp.2))</code></pre>
+<pre><code>##           State     Comp.1    Comp.2     Comp.3    Comp.4     Comp.5
+## 1      Arkansas -0.6371814 -1.910875  0.1290339 0.5068852 0.18894735
+## 2      Kentucky -1.0947299 -2.025273 -1.0235626 0.7528087 0.03891727
+## 3 West Virginia -0.2363236 -2.139565  0.1280482 0.7547609 0.11165863
+##       Comp.6      Comp.7
+## 1 -0.1469313 -0.04189039
+## 2 -0.2510903 -0.07248680
+## 3 -0.1247655 -0.02836988</code></pre>
+<pre class="r"><code>data_pca$loadings[1:7,1:2]%&gt;%as.data.frame%&gt;%rownames_to_column%&gt;%
+ggplot()+geom_hline(aes(yintercept=0),lty=2)+
+ geom_vline(aes(xintercept=0),lty=2)+ylab(&quot;PC2&quot;)+xlab(&quot;PC1&quot;)+
+ geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col=&quot;red&quot;)+
+ geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-11-2.png" width="672" />
+<em>In this next part of the analysis, we found that the states that scored highest on PC1 were Alaska, D.C., and Hawaii, while the states that scored lowest on PC1 were California, Florida, and Texas. On the other hand the states that scored highest on PC2 were California, D.C., and Texas, while the states that scored lowest on PC2 were Arkansas, Kentucky, and West Virginia.</em>
+<em>We can also see that estimated income and case counts are oppositely correlated, which is what I predicted, and another interesting take away is that population and case count are highly correlated to each other, meaning that a higher population will typically mean a higher count of cancer cases, which seems quite logical.</em></p>
+
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+        <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+        </div>
+      </div>
+      
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

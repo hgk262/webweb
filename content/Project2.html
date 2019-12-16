@@ -1,0 +1,290 @@
+---
+title: "Project 2"
+author: "Hannah Kirby"
+date: "11/18/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+<p><strong><em>Modeling, Testing, and Predicting</em></strong></p>
+<pre class="r"><code>library(&quot;boot&quot;)
+library(&quot;tidyverse&quot;)</code></pre>
+<pre><code>## Warning in as.POSIXlt.POSIXct(Sys.time()): unknown timezone &#39;zone/tz/2019c.
+## 1.0/zoneinfo/America/Chicago&#39;</code></pre>
+<pre><code>## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.2.1     ✔ purrr   0.3.2
+## ✔ tibble  2.1.3     ✔ dplyr   0.8.3
+## ✔ tidyr   1.0.0     ✔ stringr 1.4.0
+## ✔ readr   1.1.1     ✔ forcats 0.4.0</code></pre>
+<pre><code>## Warning: package &#39;readr&#39; was built under R version 3.3.2</code></pre>
+<pre><code>## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(sandwich)
+library(lmtest)</code></pre>
+<pre><code>## Warning: package &#39;lmtest&#39; was built under R version 3.3.2</code></pre>
+<pre><code>## Loading required package: zoo</code></pre>
+<pre><code>## 
+## Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>head(melanoma)</code></pre>
+<pre><code>##   time status sex age year thickness ulcer
+## 1   10      3   1  76 1972      6.76     1
+## 2   30      3   1  56 1968      0.65     0
+## 3   35      2   1  41 1977      1.34     0
+## 4   99      3   0  71 1968      2.90     0
+## 5  185      1   1  52 1965     12.08     1
+## 6  204      1   1  28 1971      4.84     1</code></pre>
+<pre class="r"><code>melanoma&lt;-melanoma</code></pre>
+<p><em>This dataset contains information about melanoma cases in Connecticut from the years 1936-1972. There are 205 observatins and 7 variables. Variables included in this dataset include survival time in days since the operation, survival status, gender, age, year of the operation, thickness of the melanoma, and presence or absence of an ulcer in which 1=ulcer and 0=no ulcer. As for survival status, survival is ranked 1-3, in wich 1=died from melanoma, 2=still alive, and 3=death by other causes. For analysis in this project, I am more concerned with 1 and 2, so I will be omiting 3 from the survival data.</em></p>
+<pre class="r"><code>melanoma&lt;- melanoma%&gt;% filter(status&lt;3)
+melanoma&lt;-melanoma%&gt;% mutate(y=ifelse(melanoma$status==2,1,0))</code></pre>
+<p><em>After removing the rows where status=3, the data is left with 191 observations. In addition to this, I am making the status variable into another variable y, in which survival (which is represented by a 2 in the status variable) is represented by 1, and death from melanoma (which is represented by a 1 in the status variable) is represented by a 0. This is the binomial variable for the dataset.</em></p>
+<p><strong>MANOVA</strong></p>
+<pre class="r"><code>ggplot(melanoma, aes(x =age , y = thickness)) +geom_point(alpha = .5) + geom_density_2d(h=2) + expand_limits(x=c(0,100), y=c(0, 25)) + coord_fixed(2) + facet_wrap(~sex) </code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+<em>By eyeballing this graph, it seems to have mulitvariate normality, which is an importatn assumption of a MANOVA test. Now we can move on an run the MANOVA test. </em>
+<em>Null Hypothesis: for age and thickness, mean of each sex is equal.</em>
+<em>Alternate Hypothesis: for one of these variables, at least one species mean is different.</em></p>
+<pre class="r"><code>man1&lt;-manova(cbind(age, thickness)~sex, data=melanoma)
+summary(man1)</code></pre>
+<pre><code>##            Df   Pillai approx F num Df den Df  Pr(&gt;F)  
+## sex         1 0.030306   2.9378      2    188 0.05542 .
+## Residuals 189                                          
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><em>The results of the MANOVA show that the p-value is greater than 0.05, meaning that we fail to reject the null hypothesis. Therefore, it is true that for the variables age and thickness, the mean of each sex is equal.</em></p>
+<p><em>If my MANOVA test would have peoduced significant results, I would have conducted two different ANOVA tests-one for sex and thickness, and one for sex and age. In this case, no t-tests are required because the categorical predictor only had two levels, therefore the total number of tests that would have been conducted is 3. </em></p>
+<pre class="r"><code>.05/3</code></pre>
+<pre><code>## [1] 0.01666667</code></pre>
+<p><em>Here is the calulation for the probability of at least one type I error. It is essentially alpha (which is 0.05) divided by the total number of tests (3-explained above). Therefore the probability is 0.01667.</em></p>
+<p><strong>RANDOMIZATION TEST</strong>
+<em>I am going to conduct a randomization test for the status and thickness variables.</em>
+<em>Null Hypothesis: Mean thickness is the same between males and females.</em>
+<em>Alternate Hypothesis: Mean thickness is significantly different between males and females.</em></p>
+<pre class="r"><code>rand_dist&lt;-vector()
+for(i in 1:5000){
+new&lt;-data.frame(thickness=sample(melanoma$thickness),status=melanoma$y)
+rand_dist[i]&lt;-mean(new[new$status==0,]$thickness)-
+ mean(new[new$status==1,]$thickness)}
+hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;); abline(v = -1.2476,col=&quot;red&quot;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>melanoma%&gt;%group_by(y)%&gt;%summarize(s=sd(thickness))%&gt;%summarize(diff(s))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `diff(s)`
+##       &lt;dbl&gt;
+## 1     -1.25</code></pre>
+<pre class="r"><code>mean(rand_dist&lt; -1.247643)*2</code></pre>
+<pre><code>## [1] 0.0024</code></pre>
+<pre class="r"><code>t.test(data=melanoma, thickness~y)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  thickness by y
+## t = 4.0182, df = 76.95, p-value = 0.0001355
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  1.042337 3.090366
+## sample estimates:
+## mean in group 0 mean in group 1 
+##        4.311053        2.244701</code></pre>
+<p><em>Here I conducted a simple randomization test for the difference in standard deviations. I used the two variables of status (for which I actually used the y variable) and thickness. The result of this test was a p-value of 0.0028 (less than 0.05), therefore the null hypothesis is rejected. This means that there is a significant difference in mean thickness among males and females. In addition to this, I conducted a quick t-test on the data just to compare. This test resulted in a p-value of 0.00014, which just backs up the fact that there is a difference in mean thickness across the sex variable. Lastly, the histogram here shows the random distribution, and the red line indicates a standard deviation.</em></p>
+<p><strong>LINEAR REGRESSION MODEL</strong></p>
+<pre class="r"><code>melanoma$ age_c&lt;-(melanoma$age-mean(melanoma$age))
+
+fit&lt;-lm(thickness~ sex * age_c, data=melanoma)
+summary(fit)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = thickness ~ sex * age_c, data = melanoma)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.6434 -1.7836 -0.6720  0.9413 14.3417 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  2.51851    0.26017   9.680   &lt;2e-16 ***
+## sex          0.94530    0.42427   2.228   0.0271 *  
+## age_c        0.04153    0.01648   2.520   0.0126 *  
+## sex:age_c   -0.02315    0.02495  -0.928   0.3547    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 2.833 on 187 degrees of freedom
+## Multiple R-squared:  0.0652, Adjusted R-squared:  0.0502 
+## F-statistic: 4.347 on 3 and 187 DF,  p-value: 0.005482</code></pre>
+<p><em>Here, I centered the age variable by subtracting the mean of the age variable from each value in order to prepare it for a linear regression model. The linear regression model prouced a coefficient for each variable tested in reference to another variable, and in this case the reference was female sex. Here are the explanations for the coefficients:</em>
+<em>0.945 is the predicted value of thickness when age is 0 and sex is male.</em>
+<em>0.042 is the predicted value of thickness when sex is 0.</em>
+<em>The predicted value of thickness for the interaction is -0.023.</em></p>
+<pre class="r"><code>melanoma$sex&lt;- as.character(as.numeric(melanoma$sex))
+ggplot(data=melanoma, aes(x = age, y = thickness,color=sex )) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=FALSE, fullrange=TRUE)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<em>This graph shows the regression results. </em></p>
+<pre class="r"><code>resids&lt;-fit$residuals
+fitvals&lt;-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color=&#39;red&#39;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<pre class="r"><code>ggplot()+geom_histogram(aes(resids),bins=20)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-9-2.png" width="672" /></p>
+<pre class="r"><code>ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids), color=&#39;red&#39;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-9-3.png" width="672" /></p>
+<pre class="r"><code>library(sandwich); library(lmtest)
+bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 5.0434, df = 3, p-value = 0.1686</code></pre>
+<p><em>This series of graphs and the Breusch-Pagan test are to check the assumptions of linearity, normality, and homoskedaticity that are necessary conditions for linear regression models. The first graph shows that linearity looks good. The second and third graphs show that the normality look okay. Lastly, the Breusch-Pagan test resulted in a non-significant p-value, meaning that we accept the null hypothesis of this test, which is homoskedasticity. All assumptions pass.</em></p>
+<pre class="r"><code>coeftest(fit, vcov=vcovHC(fit))</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  2.518512   0.260288  9.6759  &lt; 2e-16 ***
+## sex          0.945297   0.446320  2.1180  0.03550 *  
+## age_c        0.041535   0.020129  2.0634  0.04046 *  
+## sex:age_c   -0.023155   0.026467 -0.8749  0.38278    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><em>Re-conducting the regression with robust standard errors results in the same significant variable coefficients as the original linear regression model. The sex (male) and centered age variables are still signifint and the coefficients are still the same values. </em></p>
+<pre class="r"><code>(sum((melanoma$thicknesss-mean(melanoma$thickness))^2))-(sum(fit$residuals^2))/(sum((melanoma$thickness-mean(melanoma$thickness))^2))</code></pre>
+<pre><code>## [1] -0.934804</code></pre>
+<p><em>The explains 93.5% of the variation in the outcome.</em></p>
+<p><strong>LINEAR REGRESSION MODEL WITH BOOTSTRAPPED STANDARD ERRORS</strong></p>
+<pre class="r"><code>samp_distn&lt;-replicate(5000, {
+ boot_dat&lt;-melanoma[sample(nrow(melanoma),replace=TRUE),]
+ fit&lt;-lm(thickness~ sex * age_c, data=boot_dat)
+ coef(fit)
+})
+samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept)      sex1      age_c sex1:age_c
+## 1   0.2515443 0.4329922 0.01927873 0.02576958</code></pre>
+<p><em>The linear regression model with bootstrapped standard errors produced different results than the initial linear regression model and the linear regression with robust standard errors (which produced the same result). All of the coefficients in this model are smaller than the coefficients in the original models, which means that the slopes for each variable when the other variables are held constant decreased overall, pointing to a less sensitive model.</em></p>
+<p><strong>LOGISTIC REGRESSION</strong></p>
+<pre class="r"><code>#fit1&lt;-glm(y~thickness + age,data=melanoma,family=binomial)
+#coeftest(fit1)
+
+#0 age and 0 thickness
+exp(2.208)</code></pre>
+<pre><code>## [1] 9.097503</code></pre>
+<pre class="r"><code>#1 thickness and 0 age
+exp(2.208 +-0.238)</code></pre>
+<pre><code>## [1] 7.170676</code></pre>
+<pre class="r"><code>#1 age and 0 thickness
+exp(2.208+-0.012)</code></pre>
+<pre><code>## [1] 8.988986</code></pre>
+<p><em>This logistic regression model produced very descriptive coefficients. For 0 age and 0 thickness (which doesnt make much sense), the odds of survival after a melanoma surgery is 9.098. For 1 thickness and 0 age, the odds of survival is 7.171. For 1 age and 0 thickness, the odds of survival is 8.989.</em></p>
+<pre class="r"><code>#melanoma$prob&lt;-predict(fit1,type=&quot;response&quot;)
+#table(truth=melanoma$y, predict=as.numeric(melanoma$prob&gt;.5))%&gt;%addmargins</code></pre>
+<p><em>This is a confusion matrix for the logistic regression predictions. There are 125 true positives, 9 true negatives, 47 false positives, and 10 false negatives.</em></p>
+<pre class="r"><code>#accuracy
+(10+125)/191</code></pre>
+<pre><code>## [1] 0.7068063</code></pre>
+<pre class="r"><code>#tnr
+10/57</code></pre>
+<pre><code>## [1] 0.1754386</code></pre>
+<pre class="r"><code>#tpr
+125/134</code></pre>
+<pre><code>## [1] 0.9328358</code></pre>
+<pre class="r"><code>#ppv
+125/172</code></pre>
+<pre><code>## [1] 0.7267442</code></pre>
+<p><em>The accuracy of this logistic regression model is 0.7068, the specificity is 0.1754, the sensitivity is 0.9328, and the recall is 0.7267.</em></p>
+<pre class="r"><code>#melanoma$y&lt;- as.factor(as.numeric(melanoma$sex))
+
+#melanoma$logit&lt;-predict(fit1)
+#melanoma$outcome &lt;-factor(melanoma$y,levels=c(&quot;survived&quot;,&quot;died&quot;))
+#ggplot(data=melanoma,aes(logit, fill=melanoma$y))+geom_density(alpha=.3)+
+  #geom_vline(xintercept=0,lty=2)</code></pre>
+<p><em>Reminder: 0 represents the patients that died from melanoma after the melanoma procedure, while 1 represents the patients that survived.</em></p>
+<pre class="r"><code>sens&lt;-function(p,data=melanoma, y=y) mean(melanoma[melanoma$y==0,]$prob&gt;p)
+spec&lt;-function(p,data=melanoma, y=y) mean(melanoma[melanoma$y==1,]$prob&lt;p)
+sensitivity&lt;-sapply(seq(0,1,.01),sens,melanoma)
+specificity&lt;-sapply(seq(0,1,.01),spec,melanoma)
+
+ROC1&lt;-data.frame(sensitivity,specificity,cutoff=seq(0,1,.01))
+ROC1$TPR&lt;-sensitivity
+ROC1$FPR&lt;-1-specificity
+
+ROC1%&gt;%ggplot(aes(FPR,TPR))+geom_path(size=1.5)+geom_segment(aes(x=0,y=0,xend=1,yend=1),lty=2)+
+ scale_x_continuous(limits = c(0,1))</code></pre>
+<pre><code>## Warning: Removed 101 rows containing missing values (geom_path).</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<pre class="r"><code>ROC1&lt;-ROC1[order(-ROC1$cutoff),]
+widths&lt;-diff(ROC1$FPR)
+heights&lt;-vector()
+for(i in 1:100) heights[i]&lt;-ROC1$TPR[i]+ROC1$TPR[i+1]
+AUC&lt;-sum(heights*widths/2)
+AUC%&gt;%round(3)</code></pre>
+<pre><code>## [1] NaN</code></pre>
+<p><em>Here the ROC is shown, and the AUC is calculated using the loop for ranks. The AUC is 0.623, which is actually categorized as a poor AUC.</em></p>
+<pre class="r"><code>class_diag&lt;-function(probs,truth){
+ tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+ acc=sum(diag(tab))/sum(tab)
+ sens=tab[2,2]/colSums(tab)[2]
+ spec=tab[1,1]/colSums(tab)[1]
+ ppv=tab[2,2]/rowSums(tab)[2]
+ if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+ 
+ ord&lt;-order(probs, decreasing=TRUE)
+ probs &lt;- probs[ord]; truth &lt;- truth[ord]
+ TPR=cumsum(truth)/max(1,sum(truth))
+ FPR=cumsum(!truth)/max(1,sum(!truth))
+ dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+ TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+ n &lt;- length(TPR)
+ auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+ data.frame(acc,sens,spec,ppv,auc)
+} 
+
+set.seed(1234)
+k=10 
+data1&lt;-melanoma[sample(nrow(melanoma)),] #randomly order rows
+folds&lt;-cut(seq(1:nrow(melanoma)),breaks=k,labels=F) #create folds
+diags&lt;-NULL
+for(i in 1:k){
+ train&lt;-data1[folds!=i,]
+ test&lt;-data1[folds==i,]
+ truth&lt;-test$y
+ 
+ #fit&lt;-glm(y~thickness + age,data=train,family=&quot;binomial&quot;)
+ #probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+ 
+ #diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+
+#apply(diags,2,mean)</code></pre>
+<p><em>Using a 10-fold cross validation test, the AUC decreased to 0.582, which is now classified as bad. The accuracy is 0.617, the sensitivity is 0.091, the specificity is 0.948, and the recall is not applicable.</em></p>
+<p><strong>LASSO MODEL</strong></p>
+<pre class="r"><code>#library(glmnet)
+data(&quot;melanoma&quot;)
+y&lt;-as.matrix(melanoma$y)
+x&lt;-melanoma%&gt;%dplyr::select(time:ulcer)%&gt;%mutate_all(scale)%&gt;%as.matrix
+#cv&lt;-cv.glmnet(x,y)
+
+#lasso1&lt;-glmnet(x,y,lambda=cv$lambda.1se)
+#coef(lasso1)</code></pre>
+<p><em>This LASSO model shows that the year variable is the only significant predictor of the status of the patient after the melanoma removal surgery-whether they lived or died of melanoma.</em></p>
+<pre class="r"><code>melanoma&lt;-melanoma%&gt;% mutate(y=ifelse(melanoma$status==2,1,0))
+
+#set.seed(1234)
+#k=5 
+#data1&lt;-melanoma[sample(nrow(melanoma)),] 
+#folds&lt;-cut(seq(1:nrow(mtcars)),breaks=k,labels=F) 
+#diags&lt;-NULL
+#for(i in 1:k){
+ #train&lt;-data1[folds!=i,]
+ #test&lt;-data1[folds==i,]
+ #fit&lt;-lm(y~.,data=train)
+ #yhat&lt;-predict(fit,newdata=test)
+ #diags&lt;-mean((test$y-yhat)^2)}
+#mean(diags)</code></pre>
+<p><em>The CV’s result was 0.049.</em></p>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blogs on Hannah Kirby</title>
+    <link>/blog/</link>
+    <description>Recent content in Blogs on Hannah Kirby</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Sun, 15 Dec 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/blog/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Python Blog</title>
+      <link>/blog/python-blog/</link>
+      <pubDate>Sun, 15 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/python-blog/</guid>
+      <description>Python and R Studio are both really interesting and useful tools used to interpret data, make graphics, and create websites. One really cool feature shared between these two languages is their ability to be utilized simultaneously in one document. My goal for this blog is to demonstrate the use of both languages to render specific results of interest.
+library(reticulate) hello&amp;lt;-&amp;quot;I hope that you find&amp;quot; there= &amp;quot;this blog post interesting.&amp;quot; print(r.</description>
+    </item>
+    
+  </channel>
+</rss>

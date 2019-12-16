@@ -1,0 +1,40 @@
+---
+title: Python Blog
+author: Hannah Kirby
+date: '2019-12-15'
+slug: python-blog
+categories: []
+tags: []
+description: ''
+---
+
+*Python and R Studio are both really interesting and useful tools used to interpret data, make graphics, and create websites. One really cool feature shared between these two languages is their ability to be utilized simultaneously in one document. My goal for this blog is to demonstrate the use of both languages to render specific results of interest.*
+```{r}
+library(reticulate)
+
+hello<-"I hope that you find"
+```
+
+
+```{python}
+there= "this blog post interesting."
+print(r.hello, there)
+```
+*This is an example of combining text from the two separate languages.*
+
+```{r}
+cat(c(hello, py$there))
+```
+
+```{r}
+head(mtcars)
+?mtcars
+totcarwt<-sum(mtcars$wt)
+```
+
+```{python}
+r.totcarwt + 100
+
+```
+*These two examples are quite simple, but it is a very good introduction to the interaction of R and Python. It is clear from these examples that you can manipulate or create data in one language, then manupulate it or add to that data in the next language.*
+
